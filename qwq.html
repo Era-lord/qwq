@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>qwq</title>
+    <style>
+        /* 自定义字体 */
+        @font-face {
+            font-family: 'CustomFont';
+            src: url('custom-font.woff2') format('woff2'),
+                 url('custom-font.woff') format('woff'),
+                 url('custom-font.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'CustomFont', 'Arial', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #000000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* 线条背景容器 */
+        #lines-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .line {
+            position: absolute;
+            background: linear-gradient(to top, transparent, #000000, transparent);
+            width: 2px;
+            opacity: 0.2;
+            transition: all 1.5s ease-in-out;
+        }
+        
+        /* 主游戏容器 */
+        .game-container {
+            width: 500px;
+            height: 600px;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            background-color: transparent;
+            border: 2px solid #000000;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 消息栏 */
+        .message-panel {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .message-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* 自定义滚动条样式 */
+            scrollbar-width: thin;
+            scrollbar-color: #000000 #f0f0f0;
+        }
+        
+        /* Webkit 浏览器滚动条样式 */
+        .message-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .message-container::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+        
+        .message-container::-webkit-scrollbar-thumb {
+            background-color: #000000;
+            border-radius: 3px;
+        }
+        
+        .message-container::-webkit-scrollbar-thumb:hover {
+            background-color: #333333;
+        }
+        
+        /* 消息样式 */
+        .message {
+            position: relative;
+            padding: 8px 15px;
+            border-radius: 20px;
+            max-width: 85%;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: messageAppear 0.5s forwards;
+            word-wrap: break-word;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            line-height: 1.4;
+        }
+        
+        /* 三种消息样式 */
+        .message-black {
+            background-color: #000000;
+            color: #ffffff;
+            align-self: flex-end;
+        }
+        
+        .message-white {
+            background-color: #ffffff;
+            color: #000000;
+            /*border: 1px solid #000000;*/
+            align-self: flex-start;
+        }
+        
+        .message-red {
+            background-color: #ff3b30;
+            color: #ffffff;
+            align-self: center;
+        }
+        
+        /* 选择系统 - 在消息框中显示 */
+        .option-message {
+            background-color: #ffffff;
+            border: 1px solid #000000;
+            color: #000000;
+            padding: 1px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: visible;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(10px);
+            animation: messageAppear 0.5s forwards;
+            line-height: 1.4;
+            margin-top: 1px;
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .option-message:hover, .option-message:active {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        
+        /* 音乐控制按钮 */
+        .music-control {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: 1px solid #000000;
+            color: #000000;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .music-control:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        
+        /* 动画效果 */
+        @keyframes messageAppear {
+            from { 
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInImage {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes riseLine {
+            0% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.1;
+            }
+            90% {
+                opacity: 0.1;
+            }
+            100% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 550px) {
+            .game-container {
+                width: 95%;
+                height: 500px;
+            }
+            
+            .message-container {
+                padding: 12px;
+            }
+            
+            .message {
+                padding: 7px 12px;
+                font-size: 0.9rem;
+                max-width: 90%;
+            }
+            
+            .option-message {
+                padding: 8px 12px;
+                font-size: 0.9rem;
+                min-height: 35px;
+                margin-top: 2px;
+            }
+            
+            .music-control {
+                top: 10px;
+                right: 10px;
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 线条背景 -->
+    <div id="lines-background"></div>
+    
+    <!-- 音乐控制按钮 -->
+    <button class="music-control" id="music-control">♪</button>
+    
+    <!-- 主游戏容器 -->
+    <div class="game-container">
+        <!-- 消息栏 -->
+        <div class="message-panel">
+            <div class="message-container" id="message-container">
+                <!-- 消息将动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 背景音乐 -->
+    <audio id="background-music" loop>
+        <source src="background-music.mp3" type="audio/mpeg">
+        <source src="background-music.ogg" type="audio/ogg">
+        您的浏览器不支持音频元素。
+    </audio>
+
+    <!-- 消息弹出音效 -->
+    <audio id="message-sound">
+        <source src="message-sound.mp3" type="audio/mpeg">
+        <source src="message-sound.ogg" type="audio/ogg">
+        您的浏览器不支持音频元素。
+    </audio>
+
+    <script>
+        // 线条背景系统
+        let currentLineSettings = {
+            density: 135,
+            speed: 7,
+            height: 135
+        };
+
+        let activeLines = [];
+
+        function createLinesBackground() {
+            const container = document.getElementById('lines-background');
+            
+            // 先淡出现有线条
+            activeLines.forEach(line => {
+                line.classList.add('fade-out');
+            });
+            
+            // 短暂延迟后创建新线条
+            setTimeout(() => {
+                // 移除旧线条
+                container.innerHTML = '';
+                activeLines = [];
+                
+                // 创建新线条
+                for (let i = 0; i < currentLineSettings.density; i++) {
+                    const line = document.createElement('div');
+                    line.className = 'line fade-in';
+                    
+                    // 随机位置
+                    line.style.left = `${Math.random() * 100}vw`;
+                    
+                    // 设置高度
+                    const height = Math.random() * 40 + (currentLineSettings.height - 20);
+                    line.style.height = `${height}px`;
+                    
+                    // 设置动画速度
+                    const duration = Math.random() * 2 + (currentLineSettings.speed - 1);
+                    const startDelay = Math.random() * 3;
+                    
+                    // 设置动画，但先暂停
+                    line.style.animation = `riseLine ${duration}s linear infinite`;
+                    line.style.animationDelay = `${startDelay}s`;
+                    line.style.animationPlayState = 'paused';
+                    
+                    container.appendChild(line);
+                    activeLines.push(line);
+                    
+                    // 短暂延迟后开始动画，创建波浪效果
+                    setTimeout(() => {
+                        line.style.animationPlayState = 'running';
+                    }, startDelay * 100);
+                }
+            }, 300);
+        }
+
+        // 音效管理
+        function playMessageSound() {
+            const messageSound = document.getElementById('message-sound');
+            messageSound.volume = 0.6;
+            messageSound.currentTime = 0;
+            messageSound.play().catch(e => console.log('消息音效播放失败'));
+        }
+
+        // 情绪和颜文字数据
+		const emotions = {
+			'高兴': {
+				kaomoji: ['(◕‿◕)', '＼(＾▽＾)／', '(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧', 'ヽ(●´∀`●)ﾉ', '（＾ｖ＾）'],
+				strongAgainst: ['哀愁', '难过'],
+				weakAgainst: ['愉悦', '兴奋']
+			},
+			'愤怒': {
+				kaomoji: ['(╬ Ò﹏Ó)', '（╯°□°）╯︵ ┻━┻', 'ヽ(｀⌒´)ﾉ', '(╯‵□′)╯︵┻━┻', '（｀Δ´）！'],
+				strongAgainst: ['愉悦', '可爱'],
+				weakAgainst: ['害羞', '无奈']
+			},
+			'愉悦': {
+				kaomoji: ['(￣▽￣)~*', '（´∀｀*)', '（*´▽｀*）', '(｡•̀ᴗ-)✧', '（‐＾▽＾‐）'],
+				strongAgainst: ['愤怒', '紧张'],
+				weakAgainst: ['哀愁', '难过']
+			},
+			'哭': {
+				kaomoji: ['(;´༎ຶД༎ຶ`)', '(Ｔ▽Ｔ)', '(´;ω;｀)', '（；へ：）', '。・゜・(ノД`)・゜・。'],
+				strongAgainst: ['兴奋', '有趣'],
+				weakAgainst: ['高兴', '愉悦']
+			},
+			'惊讶': {
+				kaomoji: ['(⊙ˍ⊙)', 'Σ(°△°|||)︴', '（ ﾟ Дﾟ)', '（・□・；）', '（⊙.⊙）'],
+				strongAgainst: ['奸诈', '猥琐脸'],
+				weakAgainst: ['呆', '失神']
+			},
+			'害羞': {
+				kaomoji: ['(⁄ ⁄•⁄ω⁄•⁄ ⁄)', '(´･ω･`)', '（/｡＼)', '(〃▽〃)', '（＊／ω＼＊）'],
+				strongAgainst: ['愤怒', '瞪'],
+				weakAgainst: ['愉悦', '兴奋']
+			},
+			'皱眉': {
+				kaomoji: ['(´･_･`)', '(－‸ლ)', '（ーー；）', '（・－・）', '(；´Д｀)'],
+				strongAgainst: ['超爽', '兴奋'],
+				weakAgainst: ['高兴', '愉悦']
+			},
+			'瞪': {
+				kaomoji: ['(◣_◢)', '(￢_￢)', '（*ﾟДﾟ）', '（＃ﾟДﾟ）', '(｀ε´)'],
+				strongAgainst: ['可爱', '害羞'],
+				weakAgainst: ['无奈', '哀愁']
+			},
+			'无奈': {
+				kaomoji: ['(；一_一)', '（´＿｀）', '(´-ω-｀)', '（ ￣ー￣）', '（－＂－）'],
+				strongAgainst: ['愤怒', '瞪'],
+				weakAgainst: ['哀愁', '难过']
+			},
+			'小花': {
+				kaomoji: ['✿◕‿◕✿', '（*´▽｀*）', '（´∀｀*)', '(*´ω｀*)', '（‐＾▽＾‐）'],
+				strongAgainst: ['哀愁', '难过'],
+				weakAgainst: ['愤怒', '瞪']
+			},
+			'错愕': {
+				kaomoji: ['(°ロ°) !', '（ ・◇・）？', '(´⊙ω⊙`)！', 'Σ(￣。￣ﾉ)ﾉ', '(゜ロ゜)'],
+				strongAgainst: ['奸诈', '猥琐脸'],
+				weakAgainst: ['呆', '失神']
+			},
+			'慌张': {
+				kaomoji: ['(;ﾟ∇ﾟ)', '（；ﾟДﾟ）', '（・□・；）', '（/ω＼）', '(；ﾟДﾟ)'],
+				strongAgainst: ['认真', '呆'],
+				weakAgainst: ['冷静', '无奈']
+			},
+			'眨眼': {
+				kaomoji: ['(^_~)', '（＾ｖ＾）', '(◕‿◕✿)', '(｡•ᴗ•｡)', '(*´▽｀*)'],
+				strongAgainst: ['愤怒', '紧张'],
+				weakAgainst: ['愉悦', '兴奋']
+			},
+			'脸红': {
+				kaomoji: ['(*/ω＼*)', '(´∀｀*)', '（/ω＼）', '（＊／ω＼＊）', '(〃▽〃)'],
+				strongAgainst: ['愤怒', '瞪'],
+				weakAgainst: ['愉悦', '兴奋']
+			},
+			'爱心': {
+				kaomoji: ['(´｡• ᵕ •｡`) ♡', '(｡♥‿♥｡)', '(◍•ᴗ•◍)❤', '(◕‿◕)♡', '(♡˙︶˙♡)'],
+				strongAgainst: ['哀愁', '难过'],
+				weakAgainst: ['愤怒', '瞪']
+			},
+			'认真': {
+				kaomoji: ['(｀・ω・´)', '( • ̀ω•́ )', '(¬_¬")', '(´-`).｡ｏO(思考中)', '(´-ι_-｀)'],
+				strongAgainst: ['慌张', '紧张'],
+				weakAgainst: ['愉悦', '兴奋']
+			},
+			'八字纹': {
+				kaomoji: ['(´･ω･`)', '(´；ω；｀)', '(´～｀；)', '(´；д；`)', '(´；ω；`)'],
+				strongAgainst: ['超爽', '兴奋'],
+				weakAgainst: ['哀愁', '难过']
+			},
+			'有趣': {
+				kaomoji: ['( ͡° ͜ʖ ͡°)', '(≧▽≦)', '(☆▽☆)', '(ﾟ▽ﾟ*)', '(●´ω｀●)'],
+				strongAgainst: ['哭', '哀愁'],
+				weakAgainst: ['愤怒', '紧张']
+			},
+			'眯眼': {
+				kaomoji: ['(￣ω￣;)', '(´-﹏-`；)', '(；´Д｀)', '(´～`;)', '(；´∀｀)'],
+				strongAgainst: ['超爽', '兴奋'],
+				weakAgainst: ['愉悦', '高兴']
+			},
+			'奸诈': {
+				kaomoji: ['(¬‿¬)', '(｀∀´)Ψ', '(｀ε´)ノ', '(￢‿￢ )', '(｀▽´)'],
+				strongAgainst: ['惊讶', '错愕'],
+				weakAgainst: ['愤怒', '瞪']
+			},
+			'猥琐脸': {
+				kaomoji: ['( ͡° ͜ʖ ͡°)', '(´ρ`)', '(￣﹃￣)', '(´﹃｀*)', '(￣ω￣;)'],
+				strongAgainst: ['惊讶', '错愕'],
+				weakAgainst: ['愤怒', '瞪']
+			},
+			'哀愁': {
+				kaomoji: ['(´；д；`)', '(´；ω；`)', '(´；︵；`)', '٩(ŏ﹏ŏ、)۶', '(´；_；`)'],
+				strongAgainst: ['高兴', '愉悦'],
+				weakAgainst: ['愤怒', '瞪']
+			},
+			'难过': {
+				kaomoji: ['இдஇ', '(;´༎ຶД༎ຶ`)', '( ˘･з･)', '(｡í _ ì｡)', '(☍﹏⁰。)'],
+				strongAgainst: ['高兴', '愉悦'],
+				weakAgainst: ['愤怒', '瞪']
+			},
+			'超爽': {
+				kaomoji: ['(ﾉ>ω<)ﾉ', '(*´∀`)~♥', '(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧', '(ノ°∀°)ノ', '(〃∀〃)'],
+				strongAgainst: ['皱眉', '八字纹'],
+				weakAgainst: ['哀愁', '难过']
+			},
+			'疑惑': {
+				kaomoji: ['(´･_･`)', '（・◇・）？', '(´・ω・｀)?', '(・_・?)', '(´⊙ω⊙`)?'],
+				strongAgainst: ['奸诈', '猥琐脸'],
+				weakAgainst: ['呆', '失神']
+			},
+			'失神': {
+				kaomoji: ['(´-﹏-`；)', '(´-ι_-｀)', '(´～`;)', '(´-`).｡ｏO(放空中)', '(´-ω-｀)'],
+				strongAgainst: ['惊讶', '错愕'],
+				weakAgainst: ['愉悦', '兴奋']
+			},
+			'兴奋': {
+				kaomoji: ['(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧', 'ヽ(✿ﾟ▽ﾟ)ノ', '(ﾉ>ω<)ﾉ', '(ノ◕ヮ◕)ノ', '(ﾉ´▽｀)ﾉ'],
+				strongAgainst: ['哭', '哀愁'],
+				weakAgainst: ['皱眉', '八字纹']
+			},
+			'紧张': {
+				kaomoji: ['(;ﾟ∇ﾟ)', '（；ﾟДﾟ）', '(´⊙ω⊙`)！', '（・□・；）', '（/ω＼）'],
+				strongAgainst: ['愉悦', '眨眼'],
+				weakAgainst: ['无奈', '冷静']
+			},
+			'呆': {
+				kaomoji: ['(´･_･`)', '（・◇・）？', '(´・ω・｀)', '(・_・ヾ', '(´⊙ω⊙`)'],
+				strongAgainst: ['惊讶', '错愕'],
+				weakAgainst: ['愉悦', '兴奋']
+			},
+			'可爱': {
+				kaomoji: ['(◕‿◕✿)', '(｡･ω･｡)ﾉ♡', '(●´ω｀●)', '(´｡• ᵕ •｡`)', '(◍•ᴗ•◍)ゝ'],
+				strongAgainst: ['愤怒', '瞪'],
+				weakAgainst: ['愉悦', '兴奋']
+			}
+		};
+
+        // 游戏状态
+        const gameState = {
+            currentRound: 1,
+            maxRounds: 20,
+            favorability: 50,
+            currentOpponentEmotion: null,
+            gameEnded: false
+        };
+
+        // DOM元素
+        const messageContainer = document.getElementById('message-container');
+        const musicControl = document.getElementById('music-control');
+        const backgroundMusic = document.getElementById('background-music');
+
+        // 音乐控制
+        let musicPlaying = false;
+        let firstClick = true;
+
+        musicControl.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            if (musicPlaying) {
+                backgroundMusic.pause();
+                musicControl.textContent = '♪';
+            } else {
+                backgroundMusic.play().catch(e => {
+                    console.log('音乐播放失败');
+                });
+                musicControl.textContent = '♫';
+            }
+            musicPlaying = !musicPlaying;
+        });
+
+        // 初始化
+        function init() {
+            createLinesBackground();
+            
+            // 设置音乐音量
+            backgroundMusic.volume = 0.3;
+            
+
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameState.currentRound = 1;
+            gameState.favorability = 50;
+            gameState.gameEnded = false;
+            
+            messageContainer.innerHTML = '';
+            
+            // 添加初始消息
+            addMessage('red', '作为星际文明交流大使');
+			addMessage('red', '你掌握几乎所有的宇宙语言');
+			addMessage('red', '为了地球文明的发展');
+			addMessage('red', '面对颜文星人');
+			addMessage('red', '展现地球人的善良吧');
+            
+            // 开始第一轮
+            setTimeout(() => {
+                startNewRound();
+            }, 1000);
+        }
+
+        // 开始新一轮
+        function startNewRound() {
+            if (gameState.currentRound > gameState.maxRounds) {
+                endGame();
+                return;
+            }
+            
+            // 随机选择对手情绪
+            const emotionKeys = Object.keys(emotions);
+            const randomEmotionKey = emotionKeys[Math.floor(Math.random() * emotionKeys.length)];
+            gameState.currentOpponentEmotion = randomEmotionKey;
+            
+            // 随机选择该情绪的颜文字
+            const kaomojiList = emotions[randomEmotionKey].kaomoji;
+            const randomKaomoji = kaomojiList[Math.floor(Math.random() * kaomojiList.length)];
+            
+            // 显示对手消息
+            addMessage('white', randomKaomoji);
+            
+            // 生成玩家选项
+            generateOptions();
+            
+            // 更新回合
+            gameState.currentRound++;
+        }
+
+        // 生成玩家选项
+        function generateOptions() {
+            // 获取三个随机情绪（不重复）
+            const emotionKeys = Object.keys(emotions);
+            const selectedEmotions = [];
+            
+            while (selectedEmotions.length < 3) {
+                const randomEmotion = emotionKeys[Math.floor(Math.random() * emotionKeys.length)];
+                if (!selectedEmotions.includes(randomEmotion)) {
+                    selectedEmotions.push(randomEmotion);
+                }
+            }
+            
+            // 为每个情绪创建选项
+            selectedEmotions.forEach(emotion => {
+                const kaomojiList = emotions[emotion].kaomoji;
+                const randomKaomoji = kaomojiList[Math.floor(Math.random() * kaomojiList.length)];
+                
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option-message';
+                optionElement.textContent = randomKaomoji;
+                optionElement.dataset.emotion = emotion;
+                
+                optionElement.addEventListener('click', (e) => {
+                    // 阻止事件冒泡，避免触发全局点击事件
+                    e.stopPropagation();
+                    
+                    // 播放消息音效
+                    playMessageSound();
+                    
+                    // 将选择的选项内容以黑色消息样式显示
+                    const selectedOptionMessage = document.createElement('div');
+                    selectedOptionMessage.className = 'message message-black';
+                    selectedOptionMessage.textContent = randomKaomoji;
+                    messageContainer.appendChild(selectedOptionMessage);
+                    
+                    // 移除所有选项
+                    const optionMessages = messageContainer.querySelectorAll('.option-message');
+                    optionMessages.forEach(opt => opt.remove());
+                    
+                    // 滚动到底部
+                    messageContainer.scrollTop = messageContainer.scrollHeight;
+                    
+                    // 处理玩家选择
+                    handlePlayerChoice(emotion);
+                });
+                
+                messageContainer.appendChild(optionElement);
+            });
+            
+            // 滚动到底部
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+
+        // 处理玩家选择
+        function handlePlayerChoice(playerEmotion) {
+            // 计算好感度变化
+            const opponentEmotionData = emotions[gameState.currentOpponentEmotion];
+            let favorabilityChange = 0;
+            
+            if (opponentEmotionData.strongAgainst.includes(playerEmotion)) {
+                favorabilityChange = -10;
+            } else if (opponentEmotionData.weakAgainst.includes(playerEmotion)) {
+                favorabilityChange = 10;
+            } else {
+                // 随机小幅度变化
+                favorabilityChange = Math.floor(Math.random() * 6) - 3;
+            }
+            
+            // 更新好感度
+            gameState.favorability += favorabilityChange;
+            
+            // 限制好感度范围
+            if (gameState.favorability < 0) gameState.favorability = 0;
+            if (gameState.favorability > 100) gameState.favorability = 100;
+            
+            // 短暂延迟后进入下一轮
+            setTimeout(() => {
+                startNewRound();
+            }, 1000);
+        }
+
+        // 添加消息到聊天窗口
+        function addMessage(style, text) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message message-${style}`;
+            messageElement.textContent = text;
+            
+            messageContainer.appendChild(messageElement);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+            
+            // 播放消息音效
+            playMessageSound();
+        }
+
+        // 结束游戏
+        function endGame() {
+            gameState.gameEnded = true;
+            
+            // 根据好感度确定结局
+            let resultMessage;
+            
+            if (gameState.favorability >= 80) {
+                resultMessage = '你们的关系非常融洽！于是对方把你带回了颜文星';
+            } else if (gameState.favorability >= 60) {
+                resultMessage = '你们的聊天很愉快！对方送了一些颜文星的土特产';
+            } else if (gameState.favorability >= 40) {
+                resultMessage = '你们的交流还算可以，对方觉得你还是个人物';
+            } else if (gameState.favorability >= 20) {
+                resultMessage = '你们的交流有些尴尬，颜文星人在宇宙散播地球的恶名';
+            } else {
+                resultMessage = '你们的交流非常不愉快，不久后就爆发了星际战争';
+            }
+            
+            // 显示结果
+            addMessage('red', resultMessage);
+            
+            // 添加重新开始选项
+            setTimeout(() => {
+                const restartOption = document.createElement('div');
+                restartOption.className = 'option-message';
+                restartOption.textContent = 'Try Again!';
+                
+                restartOption.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    startGame();
+                });
+                
+                messageContainer.appendChild(restartOption);
+                messageContainer.scrollTop = messageContainer.scrollHeight;
+            }, 1000);
+        }
+
+        // 点击屏幕显示下一条消息
+        document.addEventListener('click', function() {
+            if (firstClick) {
+                firstClick = false;
+                // 第一次点击时播放音乐
+                backgroundMusic.play().then(() => {
+                    musicPlaying = true;
+                    musicControl.textContent = '♫';
+                }).catch(e => {
+                    console.log('首次播放被阻止');
+                });
+				
+				// 开始游戏
+				startGame();
+            }
+        });
+
+        // 初始化游戏
+        init();
+    </script>
+</body>
+</html>
